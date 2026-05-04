@@ -29,13 +29,15 @@ jobs:
         run: mvn checkstyle:checkstyle
 
       # Gửi phản hồi trực tiếp (Inline Feedback) vào Pull Request
+          # Gửi phản hồi trực tiếp (Inline Feedback) vào Pull Request
       - name: Checkstyle Reviewer
         uses: dbelyaev/action-checkstyle@master
-        if: failure() || success() # Chạy kể cả khi bước trước đó có lỗi
+        # --- THÊM DÒNG NÀY ---
+        if: (failure() || success()) && matrix.os == 'ubuntu-latest'
+        # ----------------------
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          level: warning # Hoặc error tùy bạn chọn
-
+          level: warning
       - name: Build and Verify (JaCoCo 80%)
         run: mvn verify
 
