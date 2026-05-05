@@ -19,5 +19,4 @@ jobs:
 
       # THÊM working-directory NẾU pom.xml KHÔNG NẰM Ở THƯ MỤC GỐC
       - name: Build with Maven
-        working-directory: ./shipping-app # Đổi tên này thành tên thư mục chứa pom.xml thực tế của bạn
         run: mvn package
