@@ -6,12 +6,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # BƯỚC QUAN TRỌNG ĐÃ THÊM: Tải mã nguồn về máy ảo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'maven' # Khuyến nghị thêm cache để build nhanh hơn
 
+      # THÊM working-directory NẾU pom.xml KHÔNG NẰM Ở THƯ MỤC GỐC
       - name: Build with Maven
+        working-directory: ./shipping-app # Đổi tên này thành tên thư mục chứa pom.xml thực tế của bạn
         run: mvn package
-
