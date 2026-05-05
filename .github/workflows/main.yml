@@ -1,13 +1,14 @@
-name: Java CI Full Pipeline
+name: Java CI/CD Full Pipeline
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ] # Kích hoạt khi có PR hướng vào nhánh main (Yêu cầu Bài 7)
+    branches: [ "main" ] # Trigger khi có PR hướng vào nhánh main (Bài 7)
 
 jobs:
   build-and-test:
+    # Chạy trên 3 hệ điều hành khác nhau (Bài 4)
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -22,28 +23,43 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          # Tối ưu hóa: Sử dụng cache cho Maven (Bài 6)
           cache: maven
 
-      # Bước này chạy checkstyle và lưu kết quả ra file xml (Yêu cầu để Reviewer đọc)
+      # 1. Chạy Checkstyle để tạo báo cáo XML (Bài 7)
       - name: Run Checkstyle
         run: mvn checkstyle:checkstyle
 
-      # Gửi phản hồi trực tiếp (Inline Feedback) vào Pull Request
-          # Gửi phản hồi trực tiếp (Inline Feedback) vào Pull Request
-      - name: Checkstyle Reviewer
+      # 2. Bot tự động comment lỗi format vào Pull Request (Bài 7)
+      # Lưu ý: Chỉ chạy trên Linux vì đây là Docker action
+      - name: Checkstyle Inline Review
         uses: dbelyaev/action-checkstyle@master
-        # --- THÊM DÒNG NÀY ---
         if: (failure() || success()) && matrix.os == 'ubuntu-latest'
-        # ----------------------
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           level: warning
-      - name: Build and Verify (JaCoCo 80%)
+
+      # 3. Build, chạy Test và kiểm tra JaCoCo Coverage 80% (Bài 5 & 8)
+      - name: Build and Verify Coverage
         run: mvn verify
 
+      # 4. Đóng gói sản phẩm thành file JAR (Bài 8)
+      # Chúng ta dùng 'package' để tạo file JAR sau khi đã verify thành công
+      - name: Package Application
+        run: mvn package -DskipTests
+
+      # 5. Lưu trữ báo cáo JaCoCo (Bài 5)
       - name: Upload JaCoCo Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: jacoco-report-${{ matrix.os }}
           path: target/site/jacoco/
+
+      # 6. Lưu trữ file JAR thực thi (Bài 8)
+      - name: Store Executable JAR
+        uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest' # Chỉ cần lưu bản build từ 1 OS để tránh trùng lặp
+        with:
+          name: executable-jar
+          path: target/*-with-dependencies.jar
